@@ -1,5 +1,10 @@
 window.onload = getMyLocation;
 
+var HQCoords = {
+	latitude: 47.624851,
+	longitude: -122.52099
+};
+
 function getMyLocation() {
 	if(navigator.geolocation){
 		navigator.geolocation.getCurrentPosition(displayLocation,displayError);
@@ -15,6 +20,10 @@ function displayLocation(position) {
 	
 	var div = document.getElementById("location");
 	div.innerHTML = "You are at Latitude: " + latitude + " , Longitude: " + longitude;
+	
+	var km = computeDistance(position.coords, HQCoords);
+	var distance = document.getElementById("distance");
+	distance.innerHTML = "You are " + km + " km from the HQ";
 }
 
 function displayError(error) {
