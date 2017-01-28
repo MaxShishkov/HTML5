@@ -6,16 +6,37 @@ var HQCoords = {
 };
 
 var map;
+var watchId = null;
 
 
 function getMyLocation() {
 	if(navigator.geolocation){
-		navigator.geolocation.getCurrentPosition(displayLocation,displayError);
+		var watchButton = document.getElementById("watch");
+		watchButton.onclick = watchLocation;
+		
+		var clearWatchButton = document.getElementById("ClearWatch");
+		clearWatchButton.onclick = clearWatch;
 	}
 	else {
 		alert("Oops, no geolocation support");
 	}
 }
+
+function watchLocation() {
+	var options = {
+		enableHighAccuracy: true, maximumAge: 60000
+	};
+	watchId = navigator.geolocation.watchPosition(displayLocation, displayError, options);
+}
+
+function clearWatch() {
+	if(watchId) {
+		navigator.geolocation.clearWatch(watchId);
+		watchId = null;
+	}
+}
+
+var prevCoords = null;
 
 function displayLocation(position) {
 	var latitude = position.coords.latitude;
@@ -32,8 +53,19 @@ function displayLocation(position) {
 	else
 		distance.innerHTML = "You are " + km + " km from the HQ";
 	
-	showMap(position.coords);
+	if(map == null) {
+		showMap(position.coords);
+		prevCoords = position.coords;
+	}
+	else{
+		var meters = computeDistance(position.coords, prevCoords) * 1000;
+		if(meters > 20){
+			scrollMapToPosition(position.coords);
+			prevCoords = position.coords;
+		}
+	}
 }
+
 
 function showMap(coords) {
 	var googleLatAndLong = 
@@ -51,6 +83,17 @@ function showMap(coords) {
 	var title = "Your Location";
 	var content = "You are here : " + coords.latitude + " , " + coords.longitude;
 	addMarker(map,googleLatAndLong, title, content);
+}
+
+function scrollMapToPosition(coords) {
+	var latitude = coords.latitude;
+	var longitude = coords.longitude;
+	var latlong = new google.maps.LatLng(latitude,longitude);
+	
+	map.panTo(latlong);
+	
+	addMarker(map, latlong, "Your new location", "You moved to: " +
+								latitude + " " + longitude);
 }
 
 function addMarker(map, latlong, title, content) {
